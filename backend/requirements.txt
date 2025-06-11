@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+streamlit
+transformers
+sentence-transformers
+faiss-cpu
+openai
+pydantic
+python-multipart
+httpx
