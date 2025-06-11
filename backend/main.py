@@ -12,8 +12,11 @@ import os
 # Load embedding model
 embedder = SentenceTransformer("hkunlp/instructor-xl")  # or 'all-MiniLM-L6-v2'
 
-# Load LLM (LLaMA 3 or Mistral via HuggingFace pipeline)
-llm = pipeline("text-generation", model="meta-llama/Meta-Llama-3-8B", device_map="auto")
+# Load Mistral-7B-Instruct instead of LLaMA 3 (no gated access required)
+llm = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
+
+# 📝 If you later get access to LLaMA 3, replace above line with:
+# llm = pipeline("text-generation", model="meta-llama/Meta-Llama-3-8B", device_map="auto", use_auth_token=True)
 
 # FAISS index
 dimension = 768  # Instructor-XL output size
