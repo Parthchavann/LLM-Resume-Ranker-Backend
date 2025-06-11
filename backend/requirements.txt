@@ -1,10 +1,9 @@
 fastapi
 uvicorn
-streamlit
-transformers
-sentence-transformers
-faiss-cpu
-openai
 pydantic
+faiss-cpu
+numpy
+sentence-transformers
+transformers
+openai
 python-multipart
-httpx
