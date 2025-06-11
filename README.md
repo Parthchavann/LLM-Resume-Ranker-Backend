@@ -9,4 +9,4 @@ Frontend: Streamlit or React
 Backend: FastAPI 
 Bonus: Add GPT-4/Turbo agent to give resume feedback 
 Shows: Vector DBs, LLM prompt engineering, semantic search + ranking logic = 
-real AI product thinking.
+real AI product thinking
