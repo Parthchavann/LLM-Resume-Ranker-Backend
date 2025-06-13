@@ -1,9 +1,8 @@
 fastapi
 uvicorn
-pydantic
 faiss-cpu
 numpy
-sentence-transformers
-transformers
 openai
-python-multipart
+transformers
+sentence-transformers
+torch
