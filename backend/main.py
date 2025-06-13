@@ -66,7 +66,11 @@ def rank_resumes(req: RankRequest):
     try:
         # Embed job description and resumes
         job_emb = embedder.encode([req.job_description])
+        if len(job_emb.shape) == 1:
+            job_emb = np.expand_dims(job_emb, axis=0)
         resume_embs = embedder.encode(req.resumes)
+        if len(resume_embs.shape) == 1:
+            resume_embs = np.expand_dims(resume_embs, axis=0)
 
         # Convert to correct format
         job_emb = np.asarray(job_emb).astype('float32')
