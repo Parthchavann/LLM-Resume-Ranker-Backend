@@ -68,17 +68,27 @@ def rank_resumes(req: RankRequest):
         job_emb = embedder.encode([req.job_description])
         resume_embs = embedder.encode(req.resumes)
 
-        # FAISS Indexing
+        # Convert to correct format
+        job_emb = np.asarray(job_emb).astype('float32')
+        resume_embs = np.asarray(resume_embs).astype('float32')
+
+        # Validate dimensions
+        if resume_embs.shape[1] != dimension:
+            raise ValueError(f"Resume embedding dim {resume_embs.shape[1]} != FAISS index dim {dimension}")
+        if job_emb.shape[1] != dimension:
+            raise ValueError(f"Job desc embedding dim {job_emb.shape[1]} != FAISS index dim {dimension}")
+
+        # Indexing
         faiss_index.reset()
-        faiss_index.add(np.array(resume_embs).astype('float32'))
+        faiss_index.add(resume_embs)
         resume_texts.clear()
         resume_texts.extend(req.resumes)
 
         # Nearest Neighbor Search
-        D, I = faiss_index.search(np.array(job_emb).astype('float32'), len(req.resumes))
+        D, I = faiss_index.search(job_emb, len(req.resumes))
         ranked = [{"resume": req.resumes[i], "score": float(1 / (d + 1e-5))} for d, i in zip(D[0], I[0])]
 
-        # Optional: LLM Reranking
+        # LLM Reranking (top 3)
         for r in ranked[:3]:
             prompt = f"Given the job description: {req.job_description}\n\nDoes this resume match? {r['resume']}\n\nScore 1-10 and explain:"
             try:
