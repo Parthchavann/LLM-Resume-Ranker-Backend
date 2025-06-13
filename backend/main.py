@@ -13,26 +13,23 @@ import os
 # 📌 Load Models
 # ---------------------------
 
-# Embedding model (MiniLM: 384-dim)
+# Embedding model
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-# LLM model (requires huggingface-cli login)
+# Dynamically get embedding dimension
+test_vec = embedder.encode(["test"])
+dimension = test_vec.shape[1]  # auto-set to match model
+faiss_index = faiss.IndexFlatL2(dimension)
+resume_texts = []
+
+# HuggingFace model
 llm = pipeline(
     "text-generation",
     model="meta-llama/Meta-Llama-3-8B",
     device_map="auto"
 )
 
-# OpenAI GPT-4 API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# ---------------------------
-# 📌 FAISS Setup
-# ---------------------------
-
-dimension = 384  # Correct for MiniLM
-faiss_index = faiss.IndexFlatL2(dimension)
-resume_texts = []
 
 # ---------------------------
 # 📌 FastAPI Setup
@@ -64,35 +61,23 @@ class FeedbackRequest(BaseModel):
 @app.post("/rank")
 def rank_resumes(req: RankRequest):
     try:
-        # Embed job description and resumes
         job_emb = embedder.encode([req.job_description])
-        if len(job_emb.shape) == 1:
-            job_emb = np.expand_dims(job_emb, axis=0)
         resume_embs = embedder.encode(req.resumes)
-        if len(resume_embs.shape) == 1:
-            resume_embs = np.expand_dims(resume_embs, axis=0)
 
-        # Convert to correct format
         job_emb = np.asarray(job_emb).astype('float32')
         resume_embs = np.asarray(resume_embs).astype('float32')
 
-        # Validate dimensions
         if resume_embs.shape[1] != dimension:
             raise ValueError(f"Resume embedding dim {resume_embs.shape[1]} != FAISS index dim {dimension}")
-        if job_emb.shape[1] != dimension:
-            raise ValueError(f"Job desc embedding dim {job_emb.shape[1]} != FAISS index dim {dimension}")
 
-        # Indexing
         faiss_index.reset()
         faiss_index.add(resume_embs)
         resume_texts.clear()
         resume_texts.extend(req.resumes)
 
-        # Nearest Neighbor Search
         D, I = faiss_index.search(job_emb, len(req.resumes))
         ranked = [{"resume": req.resumes[i], "score": float(1 / (d + 1e-5))} for d, i in zip(D[0], I[0])]
 
-        # LLM Reranking (top 3)
         for r in ranked[:3]:
             prompt = f"Given the job description: {req.job_description}\n\nDoes this resume match? {r['resume']}\n\nScore 1-10 and explain:"
             try:
