@@ -12,10 +12,9 @@ import os
 # ---------------------------
 # 📌 Load Embedding Model
 # ---------------------------
-embedder = SentenceTransformer("hkunlp/instructor-xl")  # or all-MiniLM-L6-v2
+embedder = SentenceTransformer("all-MiniLM-L6-v2")  # or all-MiniLM-L6-v2
 test_vec = embedder.encode(["test"])
 dimension = test_vec.shape[1]
-
 # ---------------------------
 # 📌 Load LLM Model (Hugging Face, must be logged in)
 # ---------------------------
