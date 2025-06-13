@@ -15,10 +15,9 @@ import os
 
 # Embedding model
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Dynamically get embedding dimension
 test_vec = embedder.encode(["test"])
 dimension = test_vec.shape[1]  # auto-set to match model
+
 faiss_index = faiss.IndexFlatL2(dimension)
 resume_texts = []
 
@@ -71,11 +70,11 @@ def rank_resumes(req: RankRequest):
             raise ValueError(f"Resume embedding dim {resume_embs.shape[1]} != FAISS index dim {dimension}")
 
         faiss_index.reset()
-        faiss_index.add(resume_embs)
+        faiss_index.add(np.array(resume_embs).astype("float32"))
         resume_texts.clear()
         resume_texts.extend(req.resumes)
 
-        D, I = faiss_index.search(job_emb, len(req.resumes))
+        D, I = faiss_index.search(np.array(job_emb).astype("float32"), len(req.resumes))
         ranked = [{"resume": req.resumes[i], "score": float(1 / (d + 1e-5))} for d, i in zip(D[0], I[0])]
 
         for r in ranked[:3]:
